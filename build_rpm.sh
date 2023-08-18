@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NGINX_SRPM_URL=https://nginx.org/packages/mainline/rhel/9/SRPMS
+NGINX_SRPM_URL=https://dl.fedoraproject.org/pub/fedora/linux/releases/38/Everything/source/tree/Packages/n
 BUILD_DIR=build
 
 printf "Preparing build environment...\n"
@@ -26,11 +26,15 @@ cp ../nginx.conf .
 # Patch nginx.spec
 cp nginx.spec aps-nginx.spec
 sed -i "s/^Name:.*$/Name: aps-nginx/" aps-nginx.spec
-sed -i '/^Provides:/!b;:a;n;//ba;i\Provides: aps-nginx-r%{base_version}' aps-nginx.spec
-sed -i "s/^Source0:.*$/Source0: https:\/\/nginx.org\/download\/nginx-%{version}.tar.gz/" aps-nginx.spec
 sed -i "s/%{name}/nginx/" aps-nginx.spec
+sed -i "s/^Source0:.*$/Source0: https:\/\/nginx.org\/download\/nginx-%{version}.tar.gz/" aps-nginx.spec
 sed -i "s/%autosetup -p1/%autosetup -p1 -n nginx-%{version}/" aps-nginx.spec
+sed -i 's/mv ..\/nginx-%{version}-%{release}-src ./mv ..\/%{name}-%{version}-%{release}-src ./g' aps-nginx.spec
+sed -i 's/mv nginx-%{version}-%{release}-src %{buildroot}%{nginx_srcdir}/mv %{name}-%{version}-%{release}-src %{buildroot}%{nginx_srcdir}/g' aps-nginx.spec
+echo "Provides: aps-nginx = %{nginx_abiversion}" aps-nginx.spec
 echo "Conflicts: nginx" >> aps-nginx.spec
+
+# exit 0
 
 printf "Repackaging $LATEST_VERSION...\n"
 rm -rf ~/rpmbuild/
