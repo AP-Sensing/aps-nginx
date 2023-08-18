@@ -30,6 +30,7 @@ sed -i '/^Provides:/!b;:a;n;//ba;i\Provides: aps-nginx-r%{base_version}' aps-ngi
 sed -i "s/^Source0:.*$/Source0: https:\/\/nginx.org\/download\/nginx-%{version}.tar.gz/" aps-nginx.spec
 sed -i "s/%{name}/nginx/" aps-nginx.spec
 sed -i "s/%autosetup -p1/%autosetup -p1 -n nginx-%{version}/" aps-nginx.spec
+echo "Conflicts: nginx" >> aps-nginx.spec
 
 printf "Repackaging $LATEST_VERSION...\n"
 rm -rf ~/rpmbuild/
