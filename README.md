@@ -8,6 +8,13 @@ A script for repackaging the nginx rpm package with a custom `nginx.conf`.
 sudo dnf install rpmdevtools sed curl wget tar gcc make
 ```
 
+## Generating Patches
+```bash
+git diff --no-index nginx.spec aps-nginx.spec > aps-nginx.spec.diff
+```
+
+After that change all `nginx.spec` to `aps-nginx.spec` inside the generated `aps-nginx.spec.diff` file.
+
 ## Building
 
 ```bash

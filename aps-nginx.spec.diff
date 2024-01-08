@@ -1,0 +1,209 @@
+diff --git a/aps-nginx.spec b/aps-nginx.spec
+index b213f2f..b2428f1 100644
+--- a/aps-nginx.spec
++++ b/aps-nginx.spec
+@@ -46,14 +46,14 @@
+ 
+ %global nginx_moduledir %{_libdir}/nginx/modules
+ %global nginx_moduleconfdir %{_datadir}/nginx/modules
+-%global nginx_srcdir %{_usrsrc}/%{name}-%{version}-%{release}
++%global nginx_srcdir %{_usrsrc}/nginx-%{version}-%{release}
+ 
+ # Do not generate provides/requires from nginx sources
+ %global __provides_exclude_from ^%{nginx_srcdir}/.*$
+ %global __requires_exclude_from ^%{nginx_srcdir}/.*$
+ 
+ 
+-Name:              nginx
++Name:              aps-nginx
+ Epoch:             1
+ Version:           1.22.1
+ Release:           2%{?dist}
+@@ -78,6 +78,7 @@ Source13:          nginx-upgrade
+ Source14:          nginx-upgrade.8
+ Source15:          macros.nginxmods.in
+ Source16:          nginxmods.attr
++Source17:          proxy_shared.conf
+ Source102:         nginx-logo.png
+ Source103:         404.html
+ Source104:         50x.html
+@@ -102,14 +103,14 @@ BuildRequires:     openssl%{?openssl_pkgversion}-devel
+ BuildRequires:     pcre2-devel
+ BuildRequires:     zlib-devel
+ 
+-Requires:          nginx-filesystem = %{epoch}:%{version}-%{release}
++Requires:          aps-nginx-filesystem = %{epoch}:%{version}-%{release}
+ %if 0%{?el7}
+ # centos-logos el7 does not provide 'system-indexhtml'
+ Requires:          system-logos redhat-indexhtml
+ # need to remove epel7 geoip sub-package, doesn't work anymore
+ # https://bugzilla.redhat.com/show_bug.cgi?id=1576034
+ # https://bugzilla.redhat.com/show_bug.cgi?id=1664957
+-Obsoletes:         nginx-mod-http-geoip <= 1:1.16
++Obsoletes:         aps-nginx-mod-http-geoip <= 1:1.16
+ %else
+ Requires:          system-logos-httpd
+ %endif
+@@ -118,14 +119,14 @@ Provides:          webserver
+ %if 0%{?fedora} || 0%{?rhel} >= 8
+ Recommends:        logrotate
+ %endif
+-Requires:          %{name}-core = %{epoch}:%{version}-%{release}
++Requires:          aps-nginx-core = %{epoch}:%{version}-%{release}
+ 
+ BuildRequires:     systemd
+ Requires(post):    systemd
+ Requires(preun):   systemd
+ Requires(postun):  systemd
+ # For external nginx modules
+-Provides:          nginx(abi) = %{nginx_abiversion}
++Provides:          aps-nginx(abi) = %{nginx_abiversion}
+ 
+ %description
+ Nginx is a web server and a reverse proxy server for HTTP, SMTP, POP3 and
+@@ -135,11 +136,12 @@ memory usage.
+ %package core
+ Summary: nginx minimal core
+ %if 0%{?with_mailcap_mimetypes}
++# Do not override with 'aps-nginx-mimetypes' since it's build externally
+ Requires:          nginx-mimetypes
+ %endif
+ Requires:          openssl%{?openssl_pkgversion}-libs
+-Requires(pre):     nginx-filesystem
+-Conflicts:         nginx < 1:1.20.2-4
++Requires(pre):     aps-nginx-filesystem
++Conflicts:         nginx
+ 
+ %description core
+ nginx minimal core
+@@ -149,13 +151,13 @@ Summary:           A meta package that installs all available Nginx modules
+ BuildArch:         noarch
+ 
+ %if %{with geoip}
+-Requires:          nginx-mod-http-geoip = %{epoch}:%{version}-%{release}
++Requires:          aps-nginx-mod-http-geoip = %{epoch}:%{version}-%{release}
+ %endif
+-Requires:          nginx-mod-http-image-filter = %{epoch}:%{version}-%{release}
+-Requires:          nginx-mod-http-perl = %{epoch}:%{version}-%{release}
+-Requires:          nginx-mod-http-xslt-filter = %{epoch}:%{version}-%{release}
+-Requires:          nginx-mod-mail = %{epoch}:%{version}-%{release}
+-Requires:          nginx-mod-stream = %{epoch}:%{version}-%{release}
++Requires:          aps-nginx-mod-http-image-filter = %{epoch}:%{version}-%{release}
++Requires:          aps-nginx-mod-http-perl = %{epoch}:%{version}-%{release}
++Requires:          aps-nginx-mod-http-xslt-filter = %{epoch}:%{version}-%{release}
++Requires:          aps-nginx-mod-mail = %{epoch}:%{version}-%{release}
++Requires:          aps-nginx-mod-stream = %{epoch}:%{version}-%{release}
+ 
+ %description all-modules
+ Meta package that installs all available nginx modules.
+@@ -174,7 +176,7 @@ directories.
+ %package mod-http-geoip
+ Summary:           Nginx HTTP geoip module
+ BuildRequires:     GeoIP-devel
+-Requires:          nginx(abi) = %{nginx_abiversion}
++Requires:          aps-nginx(abi) = %{nginx_abiversion}
+ Requires:          GeoIP
+ 
+ %description mod-http-geoip
+@@ -184,7 +186,7 @@ Requires:          GeoIP
+ %package mod-http-image-filter
+ Summary:           Nginx HTTP image filter module
+ BuildRequires:     gd-devel
+-Requires:          nginx(abi) = %{nginx_abiversion}
++Requires:          aps-nginx(abi) = %{nginx_abiversion}
+ Requires:          gd
+ 
+ %description mod-http-image-filter
+@@ -197,7 +199,7 @@ BuildRequires:     perl-devel
+ BuildRequires:     perl-generators
+ %endif
+ BuildRequires:     perl(ExtUtils::Embed)
+-Requires:          nginx(abi) = %{nginx_abiversion}
++Requires:          aps-nginx(abi) = %{nginx_abiversion}
+ Requires:          perl(constant)
+ 
+ %description mod-http-perl
+@@ -206,28 +208,28 @@ Requires:          perl(constant)
+ %package mod-http-xslt-filter
+ Summary:           Nginx XSLT module
+ BuildRequires:     libxslt-devel
+-Requires:          nginx(abi) = %{nginx_abiversion}
++Requires:          aps-nginx(abi) = %{nginx_abiversion}
+ 
+ %description mod-http-xslt-filter
+ %{summary}.
+ 
+ %package mod-mail
+ Summary:           Nginx mail modules
+-Requires:          nginx(abi) = %{nginx_abiversion}
++Requires:          aps-nginx(abi) = %{nginx_abiversion}
+ 
+ %description mod-mail
+ %{summary}.
+ 
+ %package mod-stream
+ Summary:           Nginx stream modules
+-Requires:          nginx(abi) = %{nginx_abiversion}
++Requires:          aps-nginx(abi) = %{nginx_abiversion}
+ 
+ %description mod-stream
+ %{summary}.
+ 
+ %package mod-devel
+ Summary:           Nginx module development files
+-Requires:          nginx = %{epoch}:%{version}-%{release}
++Requires:          aps-nginx = %{epoch}:%{version}-%{release}
+ Requires:          make
+ Requires:          gcc
+ Requires:          gd-devel
+@@ -250,9 +252,9 @@ Requires:          zlib-devel
+ 
+ %prep
+ # Combine all keys from upstream into one file
+-cat %{S:2} %{S:3} %{S:4} %{S:5} > %{_builddir}/%{name}.gpg
+-%{gpgverify} --keyring='%{_builddir}/%{name}.gpg' --signature='%{SOURCE1}' --data='%{SOURCE0}'
+-%autosetup -p1
++cat %{S:2} %{S:3} %{S:4} %{S:5} > %{_builddir}/nginx.gpg
++%{gpgverify} --keyring='%{_builddir}/nginx.gpg' --signature='%{SOURCE1}' --data='%{SOURCE0}'
++%autosetup -p1 -n nginx-%{version}
+ cp %{SOURCE200} %{SOURCE210} %{SOURCE10} %{SOURCE12} .
+ 
+ %if 0%{?rhel} > 0 && 0%{?rhel} < 8
+@@ -268,8 +270,8 @@ sed \
+ %endif
+ 
+ # Prepare sources for installation
+-cp -a ../%{name}-%{version} ../%{name}-%{version}-%{release}-src
+-mv ../%{name}-%{version}-%{release}-src .
++cp -a ../nginx-%{version} ../nginx-%{version}-%{release}-src
++mv ../nginx-%{version}-%{release}-src .
+ 
+ 
+ %build
+@@ -379,6 +381,9 @@ install -p -d -m 0755 %{buildroot}%{nginx_moduledir}
+ install -p -m 0644 ./nginx.conf \
+     %{buildroot}%{_sysconfdir}/nginx
+ 
++install -p -m 0644 %{_sourcedir}/proxy_shared.conf \
++    %{buildroot}%{_sysconfdir}/nginx
++
+ rm -f %{buildroot}%{_datadir}/nginx/html/index.html
+ %if 0%{?el7}
+ ln -s ../../doc/HTML/index.html \
+@@ -441,7 +446,7 @@ echo 'load_module "%{nginx_moduledir}/ngx_stream_module.so";' \
+ # Install files for supporting nginx module builds
+ ## Install source files
+ mkdir -p %{buildroot}%{_usrsrc}
+-mv %{name}-%{version}-%{release}-src %{buildroot}%{nginx_srcdir}
++mv nginx-%{version}-%{release}-src %{buildroot}%{nginx_srcdir}
+ ## Install rpm macros
+ mkdir -p %{buildroot}%{_rpmmacrodir}
+ sed -e "s|@@NGINX_ABIVERSION@@|%{nginx_abiversion}|g" \
+@@ -534,6 +539,7 @@ fi
+ %endif
+ %config(noreplace) %{_sysconfdir}/nginx/mime.types.default
+ %config(noreplace) %{_sysconfdir}/nginx/nginx.conf
++%config(noreplace) %{_sysconfdir}/nginx/proxy_shared.conf
+ %config(noreplace) %{_sysconfdir}/nginx/nginx.conf.default
+ %config(noreplace) %{_sysconfdir}/nginx/scgi_params
+ %config(noreplace) %{_sysconfdir}/nginx/scgi_params.default

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -ue pipefail
+
 NGINX_SRPM_URL=https://dl.fedoraproject.org/pub/fedora/linux/releases/38/Everything/source/tree/Packages/n
 BUILD_DIR=build
 
@@ -25,16 +27,10 @@ cp ../nginx.conf .
 
 # Patch nginx.spec
 cp nginx.spec aps-nginx.spec
-sed -i "s/^Name:.*$/Name: aps-nginx/" aps-nginx.spec
-sed -i "s/%{name}/nginx/" aps-nginx.spec
-sed -i "s/^Source0:.*$/Source0: https:\/\/nginx.org\/download\/nginx-%{version}.tar.gz/" aps-nginx.spec
-sed -i "s/%autosetup -p1/%autosetup -p1 -n nginx-%{version}/" aps-nginx.spec
-sed -i 's/mv ..\/nginx-%{version}-%{release}-src ./mv ..\/%{name}-%{version}-%{release}-src ./g' aps-nginx.spec
-sed -i 's/mv nginx-%{version}-%{release}-src %{buildroot}%{nginx_srcdir}/mv %{name}-%{version}-%{release}-src %{buildroot}%{nginx_srcdir}/g' aps-nginx.spec
-echo "Provides: aps-nginx = %{nginx_abiversion}" aps-nginx.spec
-echo "Conflicts: nginx" >> aps-nginx.spec
+patch -p1 < ../aps-nginx.spec.diff
 
-# exit 0
+# Mark all configs to be replaced by future updates
+sed -i 's/%config(noreplace)/%config/g' aps-nginx.spec
 
 printf "Repackaging $LATEST_VERSION...\n"
 rm -rf ~/rpmbuild/
@@ -42,6 +38,7 @@ rpmdev-setuptree || exit 1
 
 cp aps-nginx.spec ~/rpmbuild/SPECS/aps-nginx.spec
 mv * ~/rpmbuild/SOURCES
+cp ../proxy_shared.conf ~/rpmbuild/SOURCES/proxy_shared.conf
 
 rpmbuild -bs ~/rpmbuild/SPECS/aps-nginx.spec || exit 1
 cp -r ~/rpmbuild/SRPMS/* . || exit 1
